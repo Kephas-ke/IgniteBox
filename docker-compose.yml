@@ -1,0 +1,67 @@
+
+services:
+  backend:
+    build: ./Backend
+    container_name: ignitebox_backend
+    volumes:
+      - ./Backend/src:/var/www/html
+      - ./Backend/writable:/var/www/html/writable
+    env_file:
+      - ./.env
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_DATABASE: ${MYSQL_DATABASE}
+      MYSQL_USER: ${MYSQL_USER}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+    depends_on:
+      - db
+    networks:
+      - ignitebox_network
+
+  nginx:
+    image: nginx:stable
+    container_name: ignitebox_nginx
+    ports:
+      - "8080:80"
+    volumes:
+      - ./Backend/src:/var/www/html
+      - ./Backend/nginx/conf.d:/etc/nginx/conf.d
+      - ./Backend/php.ini:/usr/local/etc/php/php.ini
+    depends_on:
+      - backend
+    networks:
+      - ignitebox_network
+
+  db:
+    image: mysql:8.4
+    container_name: ignitebox_db
+    restart: always
+    ports:
+      - "3306:3306"
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_DATABASE: ${MYSQL_DATABASE}
+      MYSQL_USER: ${MYSQL_USER}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+    volumes:
+      - ./Backend/IgniteBox_MySQL_session.sql:/docker-entrypoint-initdb.d/init.sql
+      - db_data:/var/lib/mysql
+    networks:
+      - ignitebox_network
+
+  frontend:
+    build: ./Frontend
+    container_name: ignitebox_frontend
+    ports:
+      - "3000:80"
+    depends_on:
+      - backend
+    networks:
+      - ignitebox_network
+
+volumes:
+  db_data:
+
+networks:
+  ignitebox_network:
+    driver: bridge

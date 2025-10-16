@@ -1,0 +1,59 @@
+
+
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: ignitebox_app
+    volumes:
+      - ./src:/var/www/html
+      - ./writable:/var/www/html/writable
+    expose:
+      - 9000
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_DATABASE: ${MYSQL_DATABASE}
+      MYSQL_USER: ${MYSQL_USER}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+    depends_on:
+      - db
+    networks:
+      - ignitebox_network
+
+  nginx:
+    image: nginx:stable
+    container_name: ignitebox_nginx
+    ports:
+      - "8080:80"               # Access the app on http://localhost:8080
+    volumes:
+      - ./src:/var/www/html
+      - ./nginx/conf.d:/etc/nginx/conf.d
+      - ./logs/nginx:/var/log/nginx
+    depends_on:
+      - app
+    networks:
+      - ignitebox_network
+
+  db:
+    image: mysql:8.4
+    container_name: ignitebox_db
+    restart: always
+    ports:
+      - "3306:3306"             # Expose MySQL for SQLTools or external connection
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_DATABASE: ${MYSQL_DATABASE}
+      MYSQL_USER: ${MYSQL_USER}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+    volumes:
+      - db_data:/var/lib/mysql
+    networks:
+      - ignitebox_network
+
+volumes:
+  db_data:
+
+networks:
+  ignitebox_network:
+    driver: bridge
