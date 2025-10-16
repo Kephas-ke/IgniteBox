@@ -1,37 +1,5 @@
 
 services:
-  backend:
-    build: ./Backend
-    container_name: ignitebox_backend
-    volumes:
-      - ./Backend/src:/var/www/html
-      - ./Backend/writable:/var/www/html/writable
-    env_file:
-      - ./.env
-    environment:
-      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
-      MYSQL_DATABASE: ${MYSQL_DATABASE}
-      MYSQL_USER: ${MYSQL_USER}
-      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
-    depends_on:
-      - db
-    networks:
-      - ignitebox_network
-
-  nginx:
-    image: nginx:stable
-    container_name: ignitebox_nginx
-    ports:
-      - "8080:80"
-    volumes:
-      - ./Backend/src:/var/www/html
-      - ./Backend/nginx/conf.d:/etc/nginx/conf.d
-      - ./Backend/php.ini:/usr/local/etc/php/php.ini
-    depends_on:
-      - backend
-    networks:
-      - ignitebox_network
-
   db:
     image: mysql:8.4
     container_name: ignitebox_db
@@ -49,11 +17,68 @@ services:
     networks:
       - ignitebox_network
 
-  frontend:
-    build: ./Frontend
-    container_name: ignitebox_frontend
+  memcached:
+    image: memcached:latest
+    container_name: ignitebox_memcached
+    restart: always
     ports:
-      - "3000:80"
+      - "11211:11211"
+    networks:
+      - ignitebox_network
+
+  backend:
+    build: ./Backend
+    container_name: ignitebox_backend
+    restart: always
+    volumes:
+      - ./Backend/src:/var/www/html
+      - ./Backend/writable:/var/www/html/writable
+    env_file:
+      - ./Backend/.env
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_DATABASE: ${MYSQL_DATABASE}
+      MYSQL_USER: ${MYSQL_USER}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+    expose:
+      - "9000"
+    depends_on:
+      - db
+      - memcached
+    networks:
+      - ignitebox_network
+
+  nginx:
+    image: nginx:stable
+    container_name: ignitebox_nginx
+    restart: always
+    ports:
+      - "8080:80"
+    volumes:
+      - ./Backend/src:/var/www/html
+      - ./Backend/nginx/conf.d:/etc/nginx/conf.d
+      - ./Backend/php.ini:/usr/local/etc/php/php.ini
+    depends_on:
+      - backend
+    networks:
+      - ignitebox_network
+
+  frontend:
+    build:
+      context: ./Frontend
+      dockerfile: Dockerfile
+    container_name: ignitebox_frontend
+    working_dir: /app
+    volumes:
+      - ./Frontend:/app
+      - /app/node_modules
+    ports:
+      - "5173:5173" # Vite dev server
+    environment:
+      - CHOKIDAR_USEPOLLING=true
+      - WATCHPACK_POLLING=true
+      - VITE_API_URL=http://localhost:8080
+    command: ["npm", "run", "dev", "--", "--host"]
     depends_on:
       - backend
     networks:

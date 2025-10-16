@@ -1,58 +1,92 @@
 <?php
 
-namespace App\Controllers;
+namespace Config;
 
-use CodeIgniter\Controller;
-use CodeIgniter\HTTP\CLIRequest;
-use CodeIgniter\HTTP\IncomingRequest;
-use CodeIgniter\HTTP\RequestInterface;
-use CodeIgniter\HTTP\ResponseInterface;
-use Psr\Log\LoggerInterface;
+use CodeIgniter\Config\AutoloadConfig;
 
 /**
- * Class BaseController
+ * -------------------------------------------------------------------
+ * AUTOLOADER CONFIGURATION
+ * -------------------------------------------------------------------
  *
- * BaseController provides a convenient place for loading components
- * and performing functions that are needed by all your controllers.
- * Extend this class in any new controllers:
- *     class Home extends BaseController
+ * This file defines the namespaces and class maps so the Autoloader
+ * can find the files as needed.
  *
- * For security be sure to declare any new methods as protected or private.
+ * NOTE: If you use an identical key in $psr4 or $classmap, then
+ *       the values in this file will overwrite the framework's values.
+ *
+ * NOTE: This class is required prior to Autoloader instantiation,
+ *       and does not extend BaseConfig.
  */
-abstract class BaseController extends Controller
+class Autoload extends AutoloadConfig
 {
-    /**
-     * Instance of the main Request object.
-     *
-     * @var CLIRequest|IncomingRequest
-     */
-    protected $request;
+  /**
+   * -------------------------------------------------------------------
+   * Namespaces
+   * -------------------------------------------------------------------
+   * This maps the locations of any namespaces in your application to
+   * their location on the file system. These are used by the autoloader
+   * to locate files the first time they have been instantiated.
+   *
+   * The 'Config' (APPPATH . 'Config') and 'CodeIgniter' (SYSTEMPATH) are
+   * already mapped for you.
+   *
+   * You may change the name of the 'App' namespace if you wish,
+   * but this should be done prior to creating any namespaced classes,
+   * else you will need to modify all of those classes for this to work.
+   *
+   * @var array<string, list<string>|string>
+   */
+  public $psr4 = [
+    APP_NAMESPACE => APPPATH,
+  ];
 
-    /**
-     * An array of helpers to be loaded automatically upon
-     * class instantiation. These helpers will be available
-     * to all other controllers that extend BaseController.
-     *
-     * @var list<string>
-     */
-    protected $helpers = [];
+  /**
+   * -------------------------------------------------------------------
+   * Class Map
+   * -------------------------------------------------------------------
+   * The class map provides a map of class names and their exact
+   * location on the drive. Classes loaded in this manner will have
+   * slightly faster performance because they will not have to be
+   * searched for within one or more directories as they would if they
+   * were being autoloaded through a namespace.
+   *
+   * Prototype:
+   *   $classmap = [
+   *       'MyClass'   => '/path/to/class/file.php'
+   *   ];
+   *
+   * @var array<string, string>
+   */
+  public $classmap = [];
 
-    /**
-     * Be sure to declare properties for any property fetch you initialized.
-     * The creation of dynamic property is deprecated in PHP 8.2.
-     */
-    // protected $session;
+  /**
+   * -------------------------------------------------------------------
+   * Files
+   * -------------------------------------------------------------------
+   * The files array provides a list of paths to __non-class__ files
+   * that will be autoloaded. This can be useful for bootstrap operations
+   * or for loading functions.
+   *
+   * Prototype:
+   *   $files = [
+   *       '/path/to/my/file.php',
+   *   ];
+   *
+   * @var list<string>
+   */
+  public $files = [];
 
-    /**
-     * @return void
-     */
-    public function initController(RequestInterface $request, ResponseInterface $response, LoggerInterface $logger)
-    {
-        // Do Not Edit This Line
-        parent::initController($request, $response, $logger);
-
-        // Preload any models, libraries, etc, here.
-
-        // E.g.: $this->session = service('session');
-    }
+  /**
+   * -------------------------------------------------------------------
+   * Helpers
+   * -------------------------------------------------------------------
+   * Prototype:
+   *   $helpers = [
+   *       'form',
+   *   ];
+   *
+   * @var list<string>
+   */
+  public $helpers = [];
 }

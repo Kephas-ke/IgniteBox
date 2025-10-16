@@ -18,6 +18,8 @@ RUN apt-get update && apt-get install -y \
     zip \
     sqlite3 \
     libsqlite3-dev \
+    supervisor \
+    && docker-php-ext-configure gd --with-freetype --with-jpeg \
     && docker-php-ext-install pdo_mysql pdo_sqlite gd mbstring exif pcntl bcmath opcache \
     && apt-get clean && rm -rf /var/lib/apt/lists/*
 
@@ -43,16 +45,21 @@ RUN chown -R www-data:www-data /var/www/html && chmod -R 755 /var/www/html
 # ===============================
 # Stage 3 — Supervisor Setup
 # ===============================
-# Use supervisord to run both Nginx and PHP-FPM in one container
-RUN apt-get update && apt-get install -y supervisor && mkdir -p /var/log/supervisor
 
-# Copy supervisor config
-COPY --chown=root:root ./supervisord.conf /etc/supervisor/conf.d/supervisord.conf
+# Create directory for Supervisor logs
+RUN mkdir -p /var/log/supervisor
+
+# Copy supervisor configuration
+COPY supervisord.conf /etc/supervisor/conf.d/supervisord.conf
 
 # ===============================
 # Stage 4 — Final setup
 # ===============================
 
-EXPOSE 80
+# Expose ports:
+# - 80 for Nginx (web)
+# - 9000 for PHP-FPM (internal)
+EXPOSE 80 9000
 
+# Start Supervisor (runs both Nginx and PHP-FPM)
 CMD ["/usr/bin/supervisord", "-c", "/etc/supervisor/conf.d/supervisord.conf"]
